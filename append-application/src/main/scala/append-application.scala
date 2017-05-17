@@ -34,7 +34,6 @@ object appendObject{
         import spark.implicits._
     
         val data = spark.read.option("header", "true").option("inferSchema", "true").option("delimiter", "|").option("parserLib", "univocity").csv(url)
-       
         //Write to Table
        val write_to_table = data.write.mode("append").format("parquet").option("path",dest_url).saveAsTable(table_to_update)
        
