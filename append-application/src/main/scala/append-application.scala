@@ -46,11 +46,11 @@ object appendApplication{
       //retrieve list of all files in the source_directory
       val path = new Path(source_directory)
       val fs = path.getFileSystem(new Configuration())
-      val files = fs.listStatus(path).map(_.getPath).toList
+      val files = fs.listStatus(path).map(_.getPath.getName).toList
     
-      files.foreach{ file_path =>
+      files.foreach{ file_name =>
         //for each file perform read, clean, update, backup and processing operations
-        val file_name = file_path.getPath.getName
+        val file_path = new File(source_directory,file_name).getPath
     
         //read the contents of the file in a dataframe
         val data = spark.read.option("header", "true").option("inferSchema", "true").option("delimiter", "|").option("parserLib", "univocity").csv(file_path)
@@ -74,7 +74,7 @@ object appendApplication{
         fs.delete(new Path(json_file)) 
       
         //move file containing updates to backup location
-        fs.rename(file_path, new Path(backup_location + file_name))
+        fs.rename(new Path(file_path), new Path(backup_location + file_name))
       }
       Thread sleep 30 
     }       
