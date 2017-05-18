@@ -50,14 +50,15 @@ object appendApplication{
     
       files.foreach{ file_name =>
         //for each file perform read, clean, update, backup and processing operations
-        val file_path = new File(source_directory,file_name).getPath
     
-        //read the contents of the file in a dataframe
+	val file_path = new File(source_directory,file_name).getPath
+        
+	//read the contents of the file in a dataframe
         val data = spark.read.option("header", "true").option("inferSchema", "true").option("delimiter", "|").option("parserLib", "univocity").csv(file_path)
       
        //preprocess data
-        data.createOrReplaceTempView("dummy_table")
-        val trimmed_data = spark.sql("select ItemID as id, ItemDescription as description, RegularSalesUnitPrice as price, LineItemSaleQuantity as quantity, TransactionBeginDateTime as date from dummy_table")
+        data.createOrReplaceTempView("temporary_table")
+        val trimmed_data = spark.sql("select ItemID as id, ItemDescription as description, RegularSalesUnitPrice as price, LineItemSaleQuantity as quantity, TransactionBeginDateTime as date from temporary_table")
       
         //write to table and update file
         val write_to_table = trimmed_data.write.mode("append").format("parquet").option("path",file_to_update).saveAsTable(table_to_update)
@@ -65,13 +66,14 @@ object appendApplication{
         //write to json location for zoomdata update
         val write_to_json = trimmed_data.write.mode("append").format("org.apache.spark.sql.json").save(json_file)
        
-        //push data in json to Zoomdata
+        //push data in json to Zoomdata using embedded script
+	"bash /tmp/script.sh"!!
       
         //remove temporary table from metastore
-        spark.sql("drop table dummy_table")
+        spark.sql("drop table temporary_table")
       
         //remove json file
-        fs.delete(new Path(json_file)) 
+//        fs.delete(new Path(json_file)) 
       
         //move file containing updates to backup location
         fs.rename(new Path(file_path), new Path(backup_location + file_name))
