@@ -1,6 +1,6 @@
 
 // compile with sbt spDist
-name := "micro-batch"
+name := "appendApplication"
 
 version := "1.0"
 
